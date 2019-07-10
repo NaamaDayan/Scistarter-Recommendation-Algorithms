@@ -8,7 +8,7 @@ class CFUserUser(Strategy):
     def __init__(self, data_items):
         self.data_items = data_items
 
-    def find_k_similar_users(self, user_id, metric='cosine', k=50):
+    def find_k_similar_users(self, user_id, metric='cosine', k=1000):
         model_knn = NearestNeighbors(k, 1.0, 'brute', 30, metric)
         model_knn.fit(self.data_items)
         distances, indices = model_knn.kneighbors(
@@ -22,7 +22,12 @@ class CFUserUser(Strategy):
         return known_user_likes
 
     def get_recommendations(self, user_index, k):
-        similar_users = self.find_k_similar_users(user_index).drop(user_index, 0)
+        return self.get_recommendations_helper(user_index, k, 100)
+
+    def get_recommendations_helper(self, user_index, k, k_knn):
+        similar_users = self.find_k_similar_users(user_index)
+        if user_index in similar_users.index:
+            similar_users = similar_users.drop(user_index, 0)
         similar_projects = [self.get_user_projects(user) for user in similar_users.index]
         similar_projects = list(set([item for sublist in similar_projects for item in sublist]))
         projects_scores = dict.fromkeys(similar_projects, 0)
@@ -32,4 +37,7 @@ class CFUserUser(Strategy):
         projects_scores = sorted(projects_scores.items(), key=lambda x: x[1], reverse=True)  # sort
         recommended_projects = [i[0] for i in projects_scores]
         known_user_projects = self.get_user_projects(user_index)
-        return list(set(recommended_projects) - set(known_user_projects))[:k]
+        recommended_projects = list(filter(lambda x: x not in known_user_projects, recommended_projects))
+        while len(recommended_projects) < k:
+            recommended_projects = self.get_recommendations_helper(user_index, k, k_knn + 100)  # increase knn_var until sufficient variety of projects
+        return recommended_projects[:k]

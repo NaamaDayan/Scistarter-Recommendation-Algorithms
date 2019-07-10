@@ -2,13 +2,14 @@ from Strategy import Strategy
 from scipy.sparse.linalg import svds
 import numpy as np
 import pandas as pd
-
+import scipy
 
 class SVD(Strategy):
 
     def __init__(self, data_items):
         self.data_items = data_items
-        u, sigma, self.Qt = svds(data_items, k=50)
+        matrix = scipy.sparse.csr_matrix(self.data_items.values).asfptype()
+        u, sigma, self.Qt = svds(matrix, k=50)
 
     def get_recommendations(self, user_index, k):
         known_user_projects = self.data_items.loc[user_index]

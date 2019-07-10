@@ -31,11 +31,10 @@ class CFItemItem(Strategy):
         most_similar_to_likes = data_neighbours.loc[known_user_projects]
         similar_list = most_similar_to_likes.values.tolist()
         similar_list = list(set([item for sublist in similar_list for item in sublist]))
-        similar_list = list(set(similar_list) - set(known_user_projects))
         neighbourhood = self.data_matrix[similar_list].loc[similar_list]
 
         user_vector = self.data_items.loc[user_index].loc[similar_list]
-
         score = neighbourhood.dot(user_vector).div(neighbourhood.sum(1))
+        score = score.drop(known_user_projects)
         recommended_projects = score.nlargest(k).index.tolist()
         return recommended_projects
