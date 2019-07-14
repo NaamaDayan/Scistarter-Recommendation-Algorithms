@@ -14,6 +14,8 @@ class CFItemItem(Strategy):
         data_sparse = sparse.csr_matrix(self.data_items)
         similarities = cosine_similarity(data_sparse.transpose())
         sim = pd.DataFrame(similarities, self.data_items.columns, self.data_items.columns)
+        sim.columns = [int(i) for i in sim.columns]
+        sim.index = [int(i) for i in sim.index]
         return sim
 
     def get_recommendations(self, user_index, k):
@@ -35,6 +37,8 @@ class CFItemItem(Strategy):
 
         user_vector = self.data_items.loc[user_index].loc[similar_list]
         score = neighbourhood.dot(user_vector).div(neighbourhood.sum(1))
-        score = score.drop(known_user_projects)
+        for project in known_user_projects:
+            if project in score.index:
+                score = score.drop(project)
         recommended_projects = score.nlargest(k).index.tolist()
         return recommended_projects
