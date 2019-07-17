@@ -10,7 +10,7 @@ api = Api(app)
 
 class Algo(Resource):
     @use_kwargs({
-        'user_index': fields.Int(),
+        'user_index': fields.Int(), #TODO:: should be string
         'k': fields.Int(),
         'algorithm_name': fields.Str(),
     })

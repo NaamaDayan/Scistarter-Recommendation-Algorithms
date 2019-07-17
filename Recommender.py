@@ -21,8 +21,9 @@ data_items = data.drop('user', 1)
 data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 
-def get_recommendations(user_index, k, algorithm):
+def get_recommendations(user_profile_id, k, algorithm):
     try:
+        user_index = data[data['user']==user_profile_id].index[0]
         if len(get_user_projects(user_index)) < 3:  # fresh user
             algorithm = PopularityBased(data_items)
         recommended_projects = algorithm.get_recommendations(user_index, k)
@@ -54,11 +55,3 @@ def recommend_default_online(user):
     relevant_projects = list(filter(lambda x: x not in get_user_projects(user), relevant_projects))
     return projects_popularity_scores.loc[relevant_projects].nlargest(1).index[0]
 
-def main():
-    algorithms = [CFItemItem(data_items), CFUserUser(data_items), PopularityBased(data_items), SVD(data_items)]
-    for algorithm in algorithms:
-        for user_index in data_items.index:
-            print(get_recommendations(user_index,3,algorithm))
-
-if __name__ == "__main__":
-    main()
