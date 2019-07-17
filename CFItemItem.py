@@ -3,12 +3,13 @@ import pandas as pd
 from scipy import sparse
 from sklearn.metrics.pairwise import cosine_similarity
 
-
 class CFItemItem(Strategy):
 
     def __init__(self, data_items):
         self.data_items = data_items
         self.data_matrix = self.calculate_similarity()
+        self.score = None
+        self.user = None
 
     def calculate_similarity(self):
         data_sparse = sparse.csr_matrix(self.data_items)
@@ -40,5 +41,20 @@ class CFItemItem(Strategy):
         for project in known_user_projects:
             if project in score.index:
                 score = score.drop(project)
+        self.score = score
+        self.user = user_index
         recommended_projects = score.nlargest(k).index.tolist()
         return recommended_projects
+
+
+    def get_highest_online_project(self):
+        from Recommender import is_online_project, recommend_default_online
+        for project in self.score.index:
+            if not is_online_project(project):
+                self.score = self.score.drop(project)
+        project = self.score.nlargest(1)
+        if len(project) == 0:
+            return recommend_default_online(self.user)
+        return project.index[0]
+
+
