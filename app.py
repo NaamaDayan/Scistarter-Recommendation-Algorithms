@@ -10,15 +10,15 @@ api = Api(app)
 
 class Algo(Resource):
     @use_kwargs({
-        'user_index': fields.Int(),
+        'user_profile_id': fields.Str(),
         'k': fields.Int(),
         'algorithm_name': fields.Str(),
     })
-    def get(self, user_index=None, k=3, algorithm_name='CFItemItem'):
+    def get(self, user_profile_id=None, k=3, algorithm_name='CFItemItem'):
         algorithm = eval(algorithm_name)(data_items)
-        results = get_recommendations(user_index, k, algorithm)
+        results = get_recommendations(user_profile_id, k, algorithm)
         return jsonify(dict(
-            user_index=user_index,
+            user_profile_id=user_profile_id,
             k=k,
             algorithm_name=algorithm_name,
             recommendations=[int(i) for i in results]
