@@ -6,6 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 class CFItemItem(Strategy):
 
     def __init__(self, data_items):
+        self.name = 'CFItemItem'
         self.data_items = data_items
         self.data_matrix = self.calculate_similarity()
         self.score = None

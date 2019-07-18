@@ -7,6 +7,7 @@ import scipy
 class SVD(Strategy):
 
     def __init__(self, data_items):
+        self.name = 'SVD'
         self.data_items = data_items
         matrix = scipy.sparse.csr_matrix(self.data_items.values).asfptype()
         u, sigma, self.Qt = svds(matrix, k=50)

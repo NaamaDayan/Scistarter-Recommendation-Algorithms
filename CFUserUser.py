@@ -6,6 +6,7 @@ from sklearn.neighbors import NearestNeighbors
 class CFUserUser(Strategy):
 
     def __init__(self, data_items):
+        self.name = 'CFUserUser'
         self.data_items = data_items
         self.projects_score = None
         self.user_index = None
