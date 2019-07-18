@@ -27,4 +27,8 @@ class Algo(Resource):
 api.add_resource(Algo, '/algo')
 
 if __name__ == '__main__':
-     app.run(port='8080')
+    import sys
+    argv = sys.argv + [None, None]
+    host = str(argv[1]) if argv[1] else '127.0.0.1'
+    port = int(argv[2]) if argv[2] else 8080
+    app.run(port=port, host=host)

@@ -16,7 +16,7 @@ def get_user_projects(user_id):
     return known_user_likes
 
 
-data = pd.read_pickle('data.pkl')
+data = pd.read_csv('user_project_matrix.csv')
 data_items = data.drop('user', 1)
 data_items.columns = [int(x) for x in data_items.columns]
 
