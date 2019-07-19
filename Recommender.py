@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 import datetime
 import random
+import csv
 from CFItemItem import CFItemItem
 from CFUserUser import CFUserUser
 from PopularityBased import PopularityBased
@@ -23,7 +24,7 @@ data_items = data.drop('user', 1)
 data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 logging.basicConfig(filename='log_file.log', level=logging.DEBUG)
-user_algorithm_mapping = pd.read_csv('user_algorithm_mapping.csv', index_col = 0)
+user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 
 def get_recommendations(user_profile_id, k, algorithm):
     try:
@@ -64,15 +65,17 @@ def recommend_default_online(user):
 def map_user_algorithm(user_profile_id):
     try:
         algs = [CFItemItem, CFUserUser, PopularityBased, SVD]
-        if user_profile_id in user_algorithm_mapping.index:
-            algorithm_id = user_algorithm_mapping.loc[user_profile_id]['algorithm']
-        else:
-            algorithm_id = random.randint(0,3)
-            with open('user_algorithm_mapping.csv', 'w') as file:
-                file.write(user_profile_id+","+str(algorithm_id))
+        fields = ['user_profile_id', 'algorithm']
+        algorithm_id = -1
+        if user_profile_id in user_algorithm_mapping_df['user_profile_id'].values:
+            algorithm_id = user_algorithm_mapping_df[user_algorithm_mapping_df['user_profile_id']==user_profile_id]['algorithm'].values[0]
+        with open('user_algorithm_mapping.csv', 'a') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            if algorithm_id == -1: # user does not exist in file
+                row = {'user_profile_id':user_profile_id, 'algorithm': random.randint(0,3)}
+                writer.writerow(row)
         return algs[algorithm_id](data_items)
     except Exception as e:
         logging.error(str(e) + " " + user_profile_id)
         return PopularityBased(data_items)
-
 

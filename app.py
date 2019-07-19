@@ -15,8 +15,8 @@ class Algo(Resource):
         'algorithm_name': fields.Str(),
     })
     def get(self, user_profile_id=None, k=3, algorithm_name='CFItemItem'):
-        algorithm = eval(algorithm_name)(data_items)
-        # algorithm = map_user_algorithm(user_profile_id)
+        # algorithm = eval(algorithm_name)(data_items)
+        algorithm = map_user_algorithm(user_profile_id)
         results = get_recommendations(user_profile_id, k, algorithm)
         return jsonify(dict(
             user_profile_id=user_profile_id,
