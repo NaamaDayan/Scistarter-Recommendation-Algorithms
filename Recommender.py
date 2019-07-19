@@ -1,5 +1,4 @@
 import pandas as pd
-import logging
 import datetime
 import random
 import csv
@@ -23,7 +22,6 @@ data = pd.read_csv('user_project_matrix.csv')
 data_items = data.drop('user', 1)
 data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
-logging.basicConfig(filename='log_file.log', level=logging.DEBUG)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 
 def get_recommendations(user_profile_id, k, algorithm):
@@ -40,10 +38,15 @@ def get_recommendations(user_profile_id, k, algorithm):
                 if project not in recommended_projects:
                     recommended_projects.append(project)
         json_info = {'user_profile_id':user_profile_id, 'algorithm': algorithm.name, 'recommendations':recommended_projects, 'timestamp':str(datetime.datetime.now())}
-        logging.info(json_info)
+        f = open("log_file.txt", "a")
+        f.write(str(json_info)+",")
+        f.close()
+
         return recommended_projects
     except Exception as e:
-        logging.error(str(e)+" "+user_profile_id)
+        f = open("log_file.txt", "a")
+        f.write(str({"Error":str(e), "user_profile_id":user_profile_id}) + "\n")
+        f.close()
         return PopularityBased(data_items).get_recommendations(user_index, k)
 
 def is_online_project(project):
@@ -76,6 +79,6 @@ def map_user_algorithm(user_profile_id):
                 writer.writerow(row)
         return algs[algorithm_id](data_items)
     except Exception as e:
-        logging.error(str(e) + " " + user_profile_id)
+        print ("Error:" ,e)
         return PopularityBased(data_items)
 
