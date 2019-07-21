@@ -9,6 +9,14 @@ First install `python3` and `python3-pip`, then
 pip3 install -r requirements.txt
 ```
 
+## Initialize
+
+```bash
+bash init.sh
+```
+
+This will initialize the user-algo mapping file and the log file.
+
 ## Deploy
 
 ```bash
