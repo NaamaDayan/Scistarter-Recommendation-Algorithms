@@ -12,16 +12,13 @@ class Algo(Resource):
     @use_kwargs({
         'user_profile_id': fields.Str(),
         'k': fields.Int(),
-        'algorithm_name': fields.Str(),
     })
-    def get(self, user_profile_id=None, k=3, algorithm_name='CFItemItem'):
-        # algorithm = eval(algorithm_name)(data_items)
+    def get(self, user_profile_id=None, k=3):
         algorithm = map_user_algorithm(user_profile_id)
         results = get_recommendations(user_profile_id, k, algorithm)
         return jsonify(dict(
             user_profile_id=user_profile_id,
             k=k,
-            algorithm_name=algorithm_name,
             recommendations=[int(i) for i in results]
         ))
 
