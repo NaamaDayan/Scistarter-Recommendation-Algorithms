@@ -23,6 +23,7 @@ data_items = data.drop('user', 1)
 data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
+user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
 
 def get_recommendations(user_profile_id, k, algorithm):
     try:
@@ -70,12 +71,14 @@ def map_user_algorithm(user_profile_id):
         algs = [CFItemItem, CFUserUser, PopularityBased, SVD]
         fields = ['user_profile_id', 'algorithm']
         algorithm_id = -1
-        if user_profile_id in user_algorithm_mapping_df['user_profile_id'].values:
-            algorithm_id = user_algorithm_mapping_df[user_algorithm_mapping_df['user_profile_id']==user_profile_id]['algorithm'].values[0]
-        with open('user_algorithm_mapping.csv', 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fields)
-            if algorithm_id == -1: # user does not exist in file
-                row = {'user_profile_id':user_profile_id, 'algorithm': random.randint(0,3)}
+        if user_profile_id in user_algorithm_mapping:
+            algorithm_id = user_algorithm_mapping[user_profile_id]
+        else:
+            algorithm_id = random.randint(0,3)
+            user_algorithm_mapping[user_profile_id] = algorithm_id
+            with open('user_algorithm_mapping.csv', 'a') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fields)
+                row = {'user_profile_id':user_profile_id, 'algorithm': algorithm_id}
                 writer.writerow(row)
         return algs[algorithm_id](data_items)
     except Exception as e:
