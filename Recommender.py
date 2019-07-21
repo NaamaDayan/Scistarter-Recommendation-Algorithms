@@ -85,3 +85,8 @@ def map_user_algorithm(user_profile_id):
         print ("Error:" ,e)
         return PopularityBased(data_items)
 
+if __name__ == '__main__':
+    user_profile_id = 'd4d93072-d02b-5f8c-af60-4dfbb10af340'
+    algorithm = map_user_algorithm(user_profile_id)
+    print (algorithm)
+    print(get_recommendations(user_profile_id,3,algorithm))
