@@ -4,6 +4,7 @@ from Strategy import Strategy
 class PopularityBased(Strategy):
 
     def __init__(self, data_items):
+        self.name = 'Popularity'
         self.data_items = data_items
         self.projects_popularity_scores = data_items.astype(bool).sum(axis=0)
         self.user = None
