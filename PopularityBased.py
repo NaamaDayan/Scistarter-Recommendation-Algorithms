@@ -10,8 +10,8 @@ class PopularityBased(Strategy):
         self.user = None
 
     def get_recommendations(self, user_index, k):
-        known_user_projects = self.data_items.loc[user_index]
-        known_user_projects = known_user_projects[known_user_projects > 0].index
+        from Recommender import get_user_projects
+        known_user_projects = get_user_projects(user_index)
         self.user = user_index
         return list(self.projects_popularity_scores.drop(known_user_projects).nlargest(k).index)
 
