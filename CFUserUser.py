@@ -25,9 +25,9 @@ class CFUserUser(Strategy):
         return known_user_likes
 
     def get_recommendations(self, user_index, k):
-        return self.get_recommendations_helper(user_index, k, 200)
+        return self.get_recommendations_helper(user_index, k, 200, 0)
 
-    def get_recommendations_helper(self, user_index, k, k_knn):
+    def get_recommendations_helper(self, user_index, k, k_knn,iteration_number):
         similar_users = self.find_k_similar_users(user_index)
         if user_index in similar_users.index:
             similar_users = similar_users.drop(user_index, 0)
@@ -43,8 +43,8 @@ class CFUserUser(Strategy):
         recommended_projects = [i[0] for i in projects_scores]
         known_user_projects = self.get_user_projects(user_index)
         recommended_projects = list(filter(lambda x: x not in known_user_projects, recommended_projects))
-        while len(recommended_projects) < k:
-            recommended_projects = self.get_recommendations_helper(user_index, k, k_knn + 100)  # increase knn_var until sufficient variety of projects
+        if len(recommended_projects) < k and iteration_number < 10:
+            recommended_projects = self.get_recommendations_helper(user_index, k, k_knn + 100, iteration_number+1)  # increase knn_var until sufficient variety of projects
         return recommended_projects[:k]
 
     def get_highest_online_project(self):
