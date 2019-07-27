@@ -28,7 +28,7 @@ class CFUserUser(Strategy):
         return self.get_recommendations_helper(user_index, k, 200, 0)
 
     def get_recommendations_helper(self, user_index, k, k_knn,iteration_number):
-        similar_users = self.find_k_similar_users(user_index)
+        similar_users = self.find_k_similar_users(user_index, k=k_knn)
         if user_index in similar_users.index:
             similar_users = similar_users.drop(user_index, 0)
         similar_projects = [self.get_user_projects(user) for user in similar_users.index]
