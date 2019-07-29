@@ -26,7 +26,7 @@ data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
-
+algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items)]
 
 def get_recommendations(user_profile_id, k, algorithm):
     try:
@@ -36,8 +36,8 @@ def get_recommendations(user_profile_id, k, algorithm):
             algorithm = PopularityBased(data_items)
         recommended_projects = algorithm.get_recommendations(user_index, k)
         recommended_projects = make_sure_k_recommendations(recommended_projects, user_index, k)
-        recommended_projects = make_sure_online_project_exists(recommended_projects, algorithm)
-        save_to_log(user_profile_id, algorithm, recommended_projects)
+        recommended_projects, not_online_recommended_project = make_sure_online_project_exists(recommended_projects, algorithm)
+        save_to_log(user_profile_id, algorithm, recommended_projects, not_online_recommended_project)
         return recommended_projects
     except Exception as e:
         f = open("log_file.txt", "a")
@@ -46,9 +46,9 @@ def get_recommendations(user_profile_id, k, algorithm):
         return PopularityBased(data_items).get_recommendations(-1, 3)
 
 
-def save_to_log(user_profile_id, algorithm, recommended_projects):
+def save_to_log(user_profile_id, algorithm, recommended_projects, is_online_added):
     json_info = {'user_profile_id': user_profile_id, 'algorithm': algorithm.name,
-                 'recommendations': recommended_projects, 'timestamp': str(datetime.datetime.now())}
+                 'recommendations': recommended_projects, 'timestamp': str(datetime.datetime.now()), 'is_online_added':is_online_added}
     f = open("log_file.txt", "a")
     f.write(str(json_info) + ",")
     f.close()
@@ -64,9 +64,11 @@ def make_sure_k_recommendations(recommended_projects, user_index,k):
 
 
 def make_sure_online_project_exists(recommendations, algorithm):
+    not_online_recommended_project = 0
     if not is_online_project_recommended(recommendations):
+        not_online_recommended_project = recommendations[-1]
         recommendations[-1] = algorithm.get_highest_online_project()
-    return recommendations
+    return recommendations, not_online_recommended_project
 
 
 def is_online_project(project):
@@ -102,7 +104,6 @@ def map_user_algorithm(user_profile_id):
 
     if user_has_history(user_profile_id): # user participates in at least 3 projects
         try:
-            algorithms = [CFItemItem, CFUserUser, PopularityBased, SVD]
             fields = ['user_profile_id', 'algorithm']
             if user_profile_id in user_algorithm_mapping:
                 algorithm_id = user_algorithm_mapping[user_profile_id]
@@ -113,12 +114,9 @@ def map_user_algorithm(user_profile_id):
                     writer = csv.DictWriter(csvfile, fieldnames=fields)
                     row = {'user_profile_id':user_profile_id, 'algorithm': algorithm_id}
                     writer.writerow(row)
-            return algorithms[algorithm_id](data_items)
+            return algorithms[algorithm_id]
         except Exception as e:
             print ("Error:" ,e)
-    return PopularityBased(data_items)
-
-
-
+    return algorithms[2] #popularity
 
 
