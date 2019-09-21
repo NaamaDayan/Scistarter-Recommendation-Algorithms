@@ -6,6 +6,7 @@ from CFItemItem import CFItemItem
 from CFUserUser import CFUserUser
 from PopularityBased import PopularityBased
 from SVD import SVD
+from Baseline import Baseline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from more_itertools import unique_everseen
 import numpy as np
@@ -26,7 +27,7 @@ data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
-algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items)]
+algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items), Baseline()]
 
 def get_recommendations(user_profile_id, k, algorithm):
     try:
@@ -100,6 +101,8 @@ def user_has_history(user_profile_id):
     return False
 
 
+
+
 def map_user_algorithm(user_profile_id):
 
     if user_has_history(user_profile_id): # user participates in at least 3 projects
@@ -108,7 +111,7 @@ def map_user_algorithm(user_profile_id):
             if user_profile_id in user_algorithm_mapping:
                 algorithm_id = user_algorithm_mapping[user_profile_id]
             else:
-                algorithm_id = random.randint(0,3)
+                algorithm_id = random.randint(0,4)
                 user_algorithm_mapping[user_profile_id] = algorithm_id
                 with open('user_algorithm_mapping.csv', 'a') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -118,5 +121,4 @@ def map_user_algorithm(user_profile_id):
         except Exception as e:
             print ("Error:" ,e)
     return algorithms[2] #popularity
-
 

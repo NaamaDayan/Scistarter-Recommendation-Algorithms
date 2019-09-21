@@ -1,3 +1,5 @@
+requests
+json
 numpy
 pandas
 scipy

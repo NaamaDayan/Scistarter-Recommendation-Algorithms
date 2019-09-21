@@ -22,7 +22,7 @@ This will initialize the user-algo mapping file and the log file.
 ```bash
 export HOST=127.0.0.1 # host & port to listen on
 export PORT=8080
-export INTVL=86400 # interval between each update, in seconds
+export INTVL=600 # interval between each update, in seconds
 bash deploy.sh
 ```
 
