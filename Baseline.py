@@ -22,4 +22,4 @@ class Baseline(Strategy):
 
     #here, also recommend Scistarter projects
     def get_highest_online_project(self):
-        return self.get_recommendations(-1, self.k)
+        return self.get_recommendations(-1, self.k)[-1]
