@@ -1,3 +1,4 @@
+from Location_based_features import is_project_reachable_to_user, get_user_loc
 from Strategy import Strategy
 import pandas as pd
 from scipy import sparse
@@ -20,7 +21,7 @@ class CFItemItem(Strategy):
         sim.index = [int(i) for i in sim.index]
         return sim
 
-    def get_recommendations(self, user_index, k):
+    def get_recommendations(self, user_index, k, ip_address):
         known_user_projects = self.data_items.loc[user_index]
         known_user_projects = known_user_projects[known_user_projects > 0].index
         user_projects = self.data_matrix[known_user_projects]  # without ratings!!
@@ -42,11 +43,19 @@ class CFItemItem(Strategy):
         for project in known_user_projects:
             if project in score.index:
                 score = score.drop(project)
+        # score = self.remove_unreachable_projects(score, ip_address)
         self.score = score
         self.user = user_index
         recommended_projects = score.nlargest(k).index.tolist()
         return recommended_projects
 
+
+    def remove_unreachable_projects(self, projects_score, ip_address):
+        user_loc = get_user_loc(ip_address)
+        for project in projects_score.index:
+            if not is_project_reachable_to_user(user_loc, project):
+                projects_score = projects_score.drop(project)
+        return projects_score
 
     def get_highest_online_project(self):
         from Recommender import is_online_project, recommend_default_online
@@ -57,5 +66,4 @@ class CFItemItem(Strategy):
         if len(project) == 0:
             return recommend_default_online(self.user)
         return project.index[0]
-
 

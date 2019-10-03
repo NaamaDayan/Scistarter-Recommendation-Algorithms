@@ -12,10 +12,18 @@ class Algo(Resource):
     @use_kwargs({
         'user_profile_id': fields.Str(),
         'k': fields.Int(),
+        'algorithm_name': fields.Str(),
+        'ip_address': fields.Str(),
     })
-    def get(self, user_profile_id=None, k=3):
-        algorithm = map_user_algorithm(user_profile_id)
-        results = get_recommendations(user_profile_id, k, algorithm)
+    def get(self, user_profile_id=None, k=3, ip_address=None, algorithm_name=None):
+        print (algorithm_name)
+        if algorithm_name=='Baseline':
+            algorithm = eval(algorithm_name)()
+        else:
+            algorithm = eval(algorithm_name)(data_items)
+        #algorithm = map_user_algorithm(user_profile_id) #TODO!!! change this!!!!
+        results = get_recommendations(user_profile_id, k, algorithm, ip_address)
+        print (user_profile_id, ": ", results)
         return jsonify(dict(
             user_profile_id=user_profile_id,
             k=k,

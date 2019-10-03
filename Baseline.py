@@ -9,7 +9,8 @@ class Baseline(Strategy):
         self.name = 'Baseline'
         self.k = None
 
-    def get_recommendations(self, user_index, k):
+    # ignore ip address
+    def get_recommendations(self, user_index, k, ip_address):
         self.k = k
         csrf_token = requests.get('https://scistarter.org').text.split('csrfmiddlewaretoken" value="')[1].split('"')[0]
         response = requests.post('https://scistarter.org/ui/request', json={'key': 'collection', 'slug': 'recommended'},

@@ -8,5 +8,11 @@ do
     python3 app.py $HOST $PORT &
     echo $! >pid
     sleep $INTVL
+
+    DIRNAME="../Backup/`date`"
+    mkdir "$DIRNAME"
+    cp * "$DIRNAME"
 done
+
+
 

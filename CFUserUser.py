@@ -1,3 +1,4 @@
+from Location_based_features import is_project_reachable_to_user, get_user_loc
 from Strategy import Strategy
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
@@ -24,10 +25,10 @@ class CFUserUser(Strategy):
         known_user_likes = known_user_likes[known_user_likes > 0].index.values
         return known_user_likes
 
-    def get_recommendations(self, user_index, k):
-        return self.get_recommendations_helper(user_index, k, 200, 0)
+    def get_recommendations(self, user_index, k, ip_address):
+        return self.get_recommendations_helper(user_index, k, 200, 0, ip_address)
 
-    def get_recommendations_helper(self, user_index, k, k_knn,iteration_number):
+    def get_recommendations_helper(self, user_index, k, k_knn,iteration_number, ip_address):
         similar_users = self.find_k_similar_users(user_index, k=k_knn)
         if user_index in similar_users.index:
             similar_users = similar_users.drop(user_index, 0)
@@ -43,9 +44,15 @@ class CFUserUser(Strategy):
         recommended_projects = [i[0] for i in projects_scores]
         known_user_projects = self.get_user_projects(user_index)
         recommended_projects = list(filter(lambda x: x not in known_user_projects, recommended_projects))
+        # recommended_projects = self.remove_unreachable_projects(recommended_projects, ip_address)
         if len(recommended_projects) < k and iteration_number < 10:
-            recommended_projects = self.get_recommendations_helper(user_index, k, k_knn + 100, iteration_number+1)  # increase knn_var until sufficient variety of projects
+            recommended_projects = self.get_recommendations_helper(user_index, k, k_knn + 100, iteration_number+1, ip_address)  # increase knn_var until sufficient variety of projects
         return recommended_projects[:k]
+
+    def remove_unreachable_projects(self, recommended_projects, ip_address):
+        user_loc = get_user_loc(ip_address)
+        return [project for project in recommended_projects if is_project_reachable_to_user(user_loc, project)]
+
 
     def get_highest_online_project(self):
         from Recommender import is_online_project, recommend_default_online
