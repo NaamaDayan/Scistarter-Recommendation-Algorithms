@@ -194,3 +194,5 @@ def update_project_info(project_id):
     except Exception as e:
         print("exception! project: ", project_id, e)
 
+if __name__ == '__main__':
+    update_records()
