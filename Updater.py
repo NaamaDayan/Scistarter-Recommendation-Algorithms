@@ -5,8 +5,12 @@ import pandas as pd
 import urllib.request
 import json
 import re
+import requests
 
 from datetime import datetime
+
+import Performance_Calculations
+import Recommender
 from FileReadWrite import FileReadWrite
 
 historical_records_pkl = FileReadWrite('historical_records.pkl')
@@ -133,6 +137,7 @@ def __update_data(cleaned):
             user_project_matrix.loc[new_row_number] = [user] + list(np.zeros(user_project_matrix.shape[1]-1,dtype=int))
         if not (str(project) in list(user_project_matrix)):
             user_project_matrix[str(project)] = 0
+            update_project_info(int(project))
         # old_value = data[data['user']==user][str(project)]
         user_project_matrix.loc[user_project_matrix['user']==user, str(project)] = 1
 
@@ -150,5 +155,42 @@ def __put_update_time():
         file.write(datetime.now().strftime("%Y-%m-%d, %H:%M:%S"))
         file.close()
 
-if __name__ == '__main__':
-    update_records()
+
+def update_project_info(project_id):
+    csrf_token = requests.get('https://scistarter.org').text.split('csrfmiddlewaretoken" value="')[1].split('"')[0]
+    try:
+        r = requests.post('https://scistarter.org/ui/request', json={'key': 'entity', 'id': int(project_id)},
+                          headers={'Referer': 'https://scistarter.org/',
+                                   'X-CSRFToken': csrf_token},
+                          cookies={'csrftoken': csrf_token})
+        status = r.json()['messages'][0]['status']['value']
+        if status != 1 and project_id not in Recommender.non_active_projects['project'].values:
+            Recommender.non_active_projects.loc[len(Recommender.non_active_projects.index)] = project_id
+            Recommender.non_active_projects.to_csv('non_active_projects.csv', index=False)
+        #project data
+        if project_id not in Performance_Calculations.projects_data.index:
+            topics = [i['label'] for i in r.json()['messages'][0]['topics']]
+            idea_age_group = " ".join([i['label'].split("(")[0] for i in r.json()['messages'][0]['audience']])
+            outdoors = r.json()['messages'][0]['outdoors']
+            indoors = r.json()['messages'][0]['indoors']
+            place = ""
+            if outdoors and indoors:
+                place = "Indoors or Outdoors"
+            elif outdoors:
+                place = "Outdoors"
+            elif indoors:
+                place = "Indoors"
+            tags = ", ".join(r.json()['messages'][0]['tags'])
+            project_data = [topics, idea_age_group, place, tags]
+            Performance_Calculations.projects_data.loc[project_id] = project_data
+            Performance_Calculations.projects_data.to_csv('projects_data.csv')
+        #project info
+        if project_id not in Recommender.projects_info.index:
+            region_info = r.json()['messages'][0]['regions']
+            regions = json.loads(region_info)['coordinates'][0][0] if region_info != None else []
+            is_active = region_info is None
+            Recommender.projects_info.loc[project_id] = [is_active, regions]
+            Recommender.projects_info.to_csv('projects_info.csv')
+    except Exception as e:
+        print("exception! project: ", project_id, e)
+

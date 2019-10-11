@@ -4,7 +4,7 @@ import abc
 class Strategy(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def get_recommendations(self, user_index, k, ip_address):
+    def get_recommendations(self, user_index, known_user_projects, k, ip_address):
         pass
 
     @abc.abstractmethod

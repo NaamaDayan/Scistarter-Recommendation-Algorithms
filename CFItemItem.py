@@ -4,6 +4,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 class CFItemItem(Strategy):
 
     def __init__(self, data_items):
@@ -21,9 +22,7 @@ class CFItemItem(Strategy):
         sim.index = [int(i) for i in sim.index]
         return sim
 
-    def get_recommendations(self, user_index, k, ip_address):
-        known_user_projects = self.data_items.loc[user_index]
-        known_user_projects = known_user_projects[known_user_projects > 0].index
+    def get_recommendations(self, user_index, known_user_projects, k, ip_address):
         user_projects = self.data_matrix[known_user_projects]  # without ratings!!
         neighbourhood_size = 10
         data_neighbours = pd.DataFrame(0, user_projects.columns, range(1, neighbourhood_size + 1))
@@ -43,14 +42,23 @@ class CFItemItem(Strategy):
         for project in known_user_projects:
             if project in score.index:
                 score = score.drop(project)
-        # score = self.remove_unreachable_projects(score, ip_address)
+        score = self.remove_non_active_projects(score)
+        score = self.remove_unreachable_projects(score, ip_address)
         self.score = score
         self.user = user_index
         recommended_projects = score.nlargest(k).index.tolist()
         return recommended_projects
 
+    @staticmethod
+    def remove_non_active_projects(projects_score):
+        from Recommender import non_active_projects
+        for project in projects_score.index:
+            if project in non_active_projects['project'].values:
+                projects_score = projects_score.drop(project)
+        return projects_score
 
-    def remove_unreachable_projects(self, projects_score, ip_address):
+    @staticmethod
+    def remove_unreachable_projects(projects_score, ip_address):
         user_loc = get_user_loc(ip_address)
         for project in projects_score.index:
             if not is_project_reachable_to_user(user_loc, project):
@@ -66,4 +74,3 @@ class CFItemItem(Strategy):
         if len(project) == 0:
             return recommend_default_online(self.user)
         return project.index[0]
-

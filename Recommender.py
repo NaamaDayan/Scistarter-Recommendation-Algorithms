@@ -28,6 +28,7 @@ projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
 algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items), Baseline()]
+non_active_projects = pd.read_csv('non_active_projects.csv')
 
 def get_recommendations(user_profile_id, k, algorithm, ip_address):
     try:
@@ -35,16 +36,17 @@ def get_recommendations(user_profile_id, k, algorithm, ip_address):
         user_index = user_index_place[0] if len(user_index_place)>0 else -1
         if user_index == -1 or len(get_user_projects(user_index)) < 3:  # fresh user
             algorithm = PopularityBased(data_items)
-        recommended_projects = algorithm.get_recommendations(user_index, k, ip_address)
+        known_user_projects = get_user_projects(user_index)
+        recommended_projects = algorithm.get_recommendations(user_index, known_user_projects, k, ip_address)
         recommended_projects = make_sure_k_recommendations(recommended_projects, user_index, k, ip_address)
         recommended_projects, not_online_recommended_project = make_sure_online_project_exists(recommended_projects, algorithm)
         save_to_log(user_profile_id, algorithm, recommended_projects, not_online_recommended_project, ip_address)
         return recommended_projects
     except Exception as e:
         f = open("log_file.txt", "a")
-        f.write(str({"Error":str(e), "user_profile_id":user_profile_id}) + "\n")
+        f.write(str({"Error":str(e), "user_profile_id":user_profile_id}) + ",\n")
         f.close()
-        return PopularityBased(data_items).get_recommendations(-1, 3, ip_address)
+        return PopularityBased(data_items).get_recommendations(-1, [], 3, ip_address)
 
 
 def save_to_log(user_profile_id, algorithm, recommended_projects, is_online_added, ip_address):
@@ -57,7 +59,8 @@ def save_to_log(user_profile_id, algorithm, recommended_projects, is_online_adde
 
 def make_sure_k_recommendations(recommended_projects, user_index,k,ip_address):
     if len(recommended_projects) < k:
-        new_to_recommend = list(PopularityBased(data_items).get_recommendations(user_index, k, ip_address))
+        known_user_projects = get_user_projects(user_index)
+        new_to_recommend = list(PopularityBased(data_items).get_recommendations(user_index, known_user_projects, k, ip_address))
         for project in new_to_recommend:
             if project not in recommended_projects:
                 recommended_projects.append(project)
@@ -104,24 +107,21 @@ current_algorithm = 0
 
 def map_user_algorithm(user_profile_id):
     global current_algorithm
-    if user_has_history(user_profile_id): # user participates in at least 3 projects
-        # try:
-        fields = ['user_profile_id', 'algorithm']
-        if user_profile_id in user_algorithm_mapping:
-            algorithm_id = int(user_algorithm_mapping[user_profile_id])
-        else:
-            current_algorithm += 1
-            algorithm_id = current_algorithm%5
-            user_algorithm_mapping[user_profile_id] = algorithm_id
-            with open('user_algorithm_mapping.csv', 'a') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fields)
-                row = {'user_profile_id':user_profile_id, 'algorithm': algorithm_id}
-                writer.writerow(row)
-        return algorithms[algorithm_id]
-        # except Exception as e:
-        #     print ("Error:" ,e)
+    try:
+        if user_has_history(user_profile_id): # user participates in at least 3 projects
+
+            fields = ['user_profile_id', 'algorithm']
+            if user_profile_id in user_algorithm_mapping:
+                algorithm_id = int(user_algorithm_mapping[user_profile_id])
+            else:
+                current_algorithm += 1
+                algorithm_id = current_algorithm%5
+                user_algorithm_mapping[user_profile_id] = algorithm_id
+                with open('user_algorithm_mapping.csv', 'a') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=fields)
+                    row = {'user_profile_id':user_profile_id, 'algorithm': algorithm_id}
+                    writer.writerow(row)
+            return algorithms[algorithm_id]
+    except Exception as e:
+        print ("Error:" ,e)
     return algorithms[2] #popularity
-
-
-if __name__ == '__main__':
-    print (get_recommendations('dc80461f-23bb-5606-8058-f4ff2f33fb32',3, CFUserUser(data_items), '13.68.172.47'))
