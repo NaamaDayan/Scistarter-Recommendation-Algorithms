@@ -8,7 +8,7 @@ from ip2geotools.databases.noncommercial import DbIpCity
 def get_user_loc(ip_addr):
     try:
         response = DbIpCity.get(ip_addr, api_key='free')
-        return [response.latitude, response.longitude]
+        return [response.longitude, response.latitude]
     except Exception as e:
         print("Exception in get_user_loc: ", ip_addr, e)
         return [0, 0]
