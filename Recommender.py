@@ -103,10 +103,18 @@ def user_has_history(user_profile_id):
             return True
     return False
 
-current_algorithm = 0
+
+def update_document_id(new_id):
+    with open('algorithm_number.txt', "w") as fd:
+        fd.write(str(new_id) + "\n")
+
+
+def retrieve_document_id():
+    with open('algorithm_number.txt', "r") as fd:
+        return int(fd.readline().strip())
+
 
 def map_user_algorithm(user_profile_id):
-    global current_algorithm
     try:
         if user_has_history(user_profile_id): # user participates in at least 3 projects
 
@@ -114,7 +122,8 @@ def map_user_algorithm(user_profile_id):
             if user_profile_id in user_algorithm_mapping:
                 algorithm_id = int(user_algorithm_mapping[user_profile_id])
             else:
-                current_algorithm += 1
+                current_algorithm = retrieve_document_id()
+                update_document_id(current_algorithm+1)
                 algorithm_id = current_algorithm%5
                 user_algorithm_mapping[user_profile_id] = algorithm_id
                 with open('user_algorithm_mapping.csv', 'a') as csvfile:
