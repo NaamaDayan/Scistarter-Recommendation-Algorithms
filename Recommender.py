@@ -12,6 +12,7 @@ from more_itertools import unique_everseen
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+HISTORY_THRES = 2
 
 def get_user_projects(user_id):
     if user_id in data_items.index:
@@ -34,7 +35,7 @@ def get_recommendations(user_profile_id, k, algorithm, ip_address):
     try:
         user_index_place = data[data['user']==user_profile_id].index
         user_index = user_index_place[0] if len(user_index_place)>0 else -1
-        if user_index == -1 or len(get_user_projects(user_index)) < 3:  # fresh user
+        if user_index == -1 or len(get_user_projects(user_index)) < HISTORY_THRES:  # fresh user
             algorithm = PopularityBased(data_items)
         known_user_projects = get_user_projects(user_index)
         recommended_projects = algorithm.get_recommendations(user_index, known_user_projects, k, ip_address)
@@ -99,7 +100,7 @@ def recommend_default_online(user):
 def user_has_history(user_profile_id):
     if user_profile_id in data['user'].values:
         user_index = data[data['user'] == user_profile_id].index[0]
-        if len(get_user_projects(user_index)) > 2:
+        if len(get_user_projects(user_index)) >= HISTORY_THRES:
             return True
     return False
 

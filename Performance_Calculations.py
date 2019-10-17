@@ -55,7 +55,7 @@ def get_precision_and_recall_by_time_split(user, k, algorithm, ip_address):
     projects_list = [str(int(x)) for x in projects_list if x is not None and x==x]
     projects_list = list(unique_everseen(projects_list))
     projects_list = [int(x) for x in projects_list]
-    if len(projects_list)>2:
+    if len(projects_list)>= Recommender.HISTORY_THRES:
         splitter_index = max(1, int(0.9*len(projects_list)))
         # split to train and test by timeline!!
         known_user_likes_train = projects_list[:splitter_index]
@@ -95,8 +95,10 @@ def precision_recall_at_k(k_values, test_users, algorithm):
 
 
 if __name__ == '__main__':
+    print(Recommender.data_items.shape)
+    print(data_items_train.shape)
     # for ip change get_recommendation param
     # precision_recall_at_k([3], Recommender.data['user'].values, CFUserUser(data_items_train))
-    precision_recall_at_k([3], Recommender.data['user'].values, CFItemItem(data_items_train))
-    #precision_recall_at_k([3], Recommender.data['user'].values, PopularityBased(data_items_train))
-    #precision_recall_at_k([3], Recommender.data['user'].values, SVD(data_items_train))
+    # precision_recall_at_k([3], Recommender.data['user'].values, CFItemItem(data_items_train))
+    # precision_recall_at_k([3], Recommender.data['user'].values, PopularityBased(data_items_train))
+    # precision_recall_at_k([3], Recommender.data['user'].values, SVD(data_items_train))
