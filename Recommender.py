@@ -28,8 +28,14 @@ data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
-algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items), Baseline()]
 non_active_projects = pd.read_csv('non_active_projects.csv')
+algorithms = [PopularityBased(data_items)]
+try:
+    algorithms = [CFItemItem(data_items), CFUserUser(data_items), PopularityBased(data_items), SVD(data_items),
+                  Baseline()]
+except Exception as e:
+    print("Exception in reading algorithms")
+    algorithms = [PopularityBased(data_items)] * 5
 
 def get_recommendations(user_profile_id, k, algorithm, ip_address):
     try:
@@ -118,7 +124,6 @@ def retrieve_document_id():
 def map_user_algorithm(user_profile_id):
     try:
         if user_has_history(user_profile_id): # user participates in at least 3 projects
-
             fields = ['user_profile_id', 'algorithm']
             if user_profile_id in user_algorithm_mapping:
                 algorithm_id = int(user_algorithm_mapping[user_profile_id])
@@ -134,4 +139,5 @@ def map_user_algorithm(user_profile_id):
             return algorithms[algorithm_id]
     except Exception as e:
         print ("Error:" ,e)
-    return algorithms[2] #popularity
+    return PopularityBased(data_items) #popularity
+
