@@ -2,15 +2,18 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 import ast
-from ip2geotools.databases.noncommercial import DbIpCity
+# from ip2geotools.databases.noncommercial import DbIpCity
+import geoip2.database
 
 
 def get_user_loc(ip_addr):
     try:
-        response = DbIpCity.get(ip_addr, api_key='free')
-        if response.latitude is None or response.longitude is None:
-            return [0,0]
-        return [response.longitude, response.latitude]
+        reader = geoip2.database.Reader('./GeoLite2 - City_20190115/GeoLite2 - City.mmdb')
+        response = reader.city(ip_addr)
+        # response = DbIpCity.get(ip_addr, api_key='free')
+        # if response.latitude is None or response.longitude is None:
+        #     return [0,0]
+        return [response.location.longitude, response.location.latitude]
     except Exception as e:
         print("Exception in get_user_loc: ", ip_addr, e)
         return [0, 0]
