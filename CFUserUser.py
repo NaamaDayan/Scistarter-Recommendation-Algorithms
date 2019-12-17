@@ -52,7 +52,8 @@ class CFUserUser(Strategy):
     @staticmethod
     def remove_non_active_projects(recommended_projects):
         from Recommender import non_active_projects
-        return [project for project in recommended_projects if project not in non_active_projects['project'].values]
+        from Updater import projects_names
+        return [project for project in recommended_projects if project not in non_active_projects['project'].values and project in projects_names.index]
 
     @staticmethod
     def remove_unreachable_projects(recommended_projects, ip_address):
