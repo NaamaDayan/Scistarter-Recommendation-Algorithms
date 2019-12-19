@@ -14,7 +14,7 @@ projects_data = pd.read_csv('projects_data.csv', index_col=0)
 projects_data = projects_data.fillna('')
 records = pd.read_pickle('historical_records.pkl')
 data_items_train = pd.read_pickle('data_items_train.pkl')
-
+old_users = pd.read_csv('user_project_matrix_old.csv')['user'].values
 
 def calculate_similarity_by_content():
     tf_idf = TfidfVectorizer()
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     print(Recommender.data_items.shape)
     print(data_items_train.shape)
     # for ip change get_recommendation param
-    # precision_recall_at_k([3], Recommender.data['user'].values, CFUserUser(data_items_train))
-    # precision_recall_at_k([3], Recommender.data['user'].values, CFItemItem(data_items_train))
-    # precision_recall_at_k([3], Recommender.data['user'].values, PopularityBased(data_items_train))
-    # precision_recall_at_k([3], Recommender.data['user'].values, SVD(data_items_train))
+    precision_recall_at_k([3], old_users, CFUserUser(data_items_train))
+    precision_recall_at_k([3], Recommender.data['user'].values, CFItemItem(data_items_train))
+    precision_recall_at_k([3], Recommender.data['user'].values, PopularityBased(data_items_train))
+    precision_recall_at_k([3], Recommender.data['user'].values, SVD(data_items_train))

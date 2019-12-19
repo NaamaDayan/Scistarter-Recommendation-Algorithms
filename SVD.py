@@ -27,7 +27,7 @@ class SVD(Strategy):
         self.user = user_index
         projects_predicted_ratings = [i[0] for i in projects_predicted_ratings]
         projects_predicted_ratings = self.remove_non_active_projects(projects_predicted_ratings)
-        projects_predicted_ratings = self.remove_unreachable_projects(projects_predicted_ratings, ip_address)
+        # projects_predicted_ratings = self.remove_unreachable_projects(projects_predicted_ratings, ip_address)
         return projects_predicted_ratings[:k]
 
     @staticmethod

@@ -44,7 +44,7 @@ class CFUserUser(Strategy):
         recommended_projects = [i[0] for i in projects_scores]
         recommended_projects = list(filter(lambda x: x not in known_user_projects, recommended_projects))
         recommended_projects = self.remove_non_active_projects(recommended_projects)
-        recommended_projects = self.remove_unreachable_projects(recommended_projects, ip_address)
+        # recommended_projects = self.remove_unreachable_projects(recommended_projects, ip_address)
         if len(recommended_projects) < k and iteration_number < 10:
             recommended_projects = self.get_recommendations_helper(user_index, known_user_projects, k, k_knn + 100, iteration_number+1, ip_address)  # increase knn_var until sufficient variety of projects
         return recommended_projects[:k]
