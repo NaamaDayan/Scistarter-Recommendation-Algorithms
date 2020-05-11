@@ -14,7 +14,7 @@ class PopularityBased(Strategy):
         self.user = user_index
         projects_score = self.projects_popularity_scores.drop(known_user_projects)
         projects_score = self.remove_non_active_projects(projects_score)
-        projects_score = self.remove_unreachable_projects(projects_score, ip_address)
+        # projects_score = self.remove_unreachable_projects(projects_score, ip_address)
         return list(projects_score.nlargest(k).index)
 
     def remove_non_active_projects(self, projects_score):

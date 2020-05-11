@@ -28,8 +28,14 @@ data_items.columns = [int(x) for x in data_items.columns]
 projects_info = pd.read_csv('projects_info.csv', index_col=0)
 user_algorithm_mapping_df = pd.read_csv('user_algorithm_mapping.csv')
 user_algorithm_mapping = {e.user_profile_id: e.algorithm for _, e in user_algorithm_mapping_df.iterrows()}
-algorithms = [CFItemItem(data_items), CFUserUser(data_items),  PopularityBased(data_items), SVD(data_items), Baseline()]
 non_active_projects = pd.read_csv('non_active_projects.csv')
+algorithms = [PopularityBased(data_items)]
+try:
+    algorithms = [CFItemItem(data_items), CFUserUser(data_items), PopularityBased(data_items), SVD(data_items),
+                  Baseline()]
+except Exception as e:
+    print("Exception in reading algorithms")
+    algorithms = [PopularityBased(data_items)] * 5
 
 def get_recommendations(user_profile_id, k, algorithm, ip_address):
     try:
@@ -45,7 +51,7 @@ def get_recommendations(user_profile_id, k, algorithm, ip_address):
         return recommended_projects
     except Exception as e:
         f = open("log_file.txt", "a")
-        f.write(str({"Error":str(e), "user_profile_id":user_profile_id}) + ",\n")
+        f.write(str({"Error":str(e), "user_profile_id":user_profile_id, "ip_address":ip_address, "algorithm":algorithm}) + ",\n")
         f.close()
         return PopularityBased(data_items).get_recommendations(-1, [], 3, ip_address)
 
@@ -113,12 +119,11 @@ def update_document_id(new_id):
 def retrieve_document_id():
     with open('algorithm_number.txt', "r") as fd:
         return int(fd.readline().strip())
-
-
+import sys, os
 def map_user_algorithm(user_profile_id):
     try:
         if user_has_history(user_profile_id): # user participates in at least 3 projects
-
+            print ("ok")
             fields = ['user_profile_id', 'algorithm']
             if user_profile_id in user_algorithm_mapping:
                 algorithm_id = int(user_algorithm_mapping[user_profile_id])
@@ -133,5 +138,8 @@ def map_user_algorithm(user_profile_id):
                     writer.writerow(row)
             return algorithms[algorithm_id]
     except Exception as e:
-        print ("Error:" ,e)
-    return algorithms[2] #popularity
+        print ("Error222:" ,e)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+    return PopularityBased(data_items) #popularity

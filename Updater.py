@@ -15,6 +15,9 @@ from FileReadWrite import FileReadWrite
 
 historical_records_pkl = FileReadWrite('historical_records.pkl')
 user_project_matrix_csv = FileReadWrite('user_project_matrix.csv')
+projects_names = pd.read_csv('projects_names.csv').set_index('project')
+clicks = pd.DataFrame([json.loads(line.strip()) for line in open('../clicks.jsons')])
+
 page = 0
 record = 0
 
@@ -25,16 +28,27 @@ else:
     historical_records = pd.DataFrame(columns = ['profile', 'project', 'type', 'whens', 'origin', 'repetitions'])
     user_project_matrix = pd.DataFrame(columns=['user'])
 
-page = int(historical_records.shape[0]/500)
-record = int(historical_records.shape[0]%500)
+# page = int(historical_records.shape[0]/500)
+# record = int(historical_records.shape[0]%500)
+
+
+def cut_unrelevant_clicks():
+    global clicks
+    clicks_index = retrieve_id('clicks_id.txt')
+    new_clicks_index = clicks.shape[0]-1
+    clicks = clicks[clicks.index>=clicks_index]
+    update_id(new_clicks_index, 'clicks_id.txt')
+
 
 def update_records():
-    global page
-    global record
+    page = retrieve_id('historical_records_id.txt')
+    record = 0
     print('filter current page')
     cleaned = __filter_current_page(page, record)
+    cut_unrelevant_clicks()
+    extract_clicks()  # from click stream
     if len(cleaned['activity']) != 0:
-        __update_data(cleaned)
+        _update_data(cleaned)
 
     while True:
         page = int(page) + 1
@@ -49,10 +63,10 @@ def update_records():
         if len(content['activity']) == 0:
             break
         else:
-            __update_data(content)
-
-    historical_records_pkl.put_data_pkl(historical_records)
-    user_project_matrix_csv.put_data_csv(user_project_matrix)
+            _update_data(content)
+            historical_records_pkl.put_data_pkl(historical_records)
+            user_project_matrix_csv.put_data_csv(user_project_matrix)
+            update_id(page, 'historical_records_id.txt')
     __put_update_time()
 
 
@@ -92,6 +106,8 @@ def __JSONconverter (cleaned_text):
         elif ('"project"') in a:
             index = [m.start() for m in re.finditer(':', a)]
             project = a[index[-1]+2:]
+            if project is None or project == 'null':
+                return {}
             data['project'] = int(project)
         elif ('"when"') in a:
             index = [m.start() for m in re.finditer('"', a)]
@@ -122,28 +138,50 @@ def __extractattribute (entry):
     cleaned_text = list(filter (lambda a: ('"profile"' in a or '"when"' in a or '"project"'in a or '"type"' in a or '"origin"' in a or '"repetitions"' in a), attribute_list))
     return cleaned_text
 
-def __update_data(cleaned):
+
+def get_user_clicked_projects(user):
+    user_clicks = clicks[clicks['profile']==user]
+    user_projects = []
+    for i,row in user_clicks.iterrows():
+        user_projects += [(user,project, row['when'],'','click',0) for project in projects_names.index if projects_names.loc[project]['name'] in " ".join([i for i in row if i==i and not isinstance(i,dict)])]
+    return user_projects
+
+
+def extract_clicks():
+    users = list(set(clicks['profile'].values))
+    new_records = []
+    for user in users:
+        print (user)
+        new_records += get_user_clicked_projects(user) 
+    for user_record in new_records:
+        insert_to_files(*user_record)
+
+def _update_data(cleaned):
     for entry in cleaned['activity']:
-        user = entry['user']
-        project = entry['project']
-        when = entry['when']
-        origin = entry['origin']
-        mtype = entry['type']
-        repetitions = entry['repetitions']
+        if len(entry)>0 and entry['type']!='interaction':
+            user = entry['user']
+            project = entry['project']
+            when = entry['when']
+            origin = entry['origin']
+            mtype = entry['type']
+            repetitions = entry['repetitions']
+            insert_to_files(user,project,when,origin,mtype,repetitions)
 
-        # Update user project matrix
-        if not (user in list(user_project_matrix['user'])):
-            new_row_number = user_project_matrix.shape[0]
-            user_project_matrix.loc[new_row_number] = [user] + list(np.zeros(user_project_matrix.shape[1]-1,dtype=int))
-        if not (str(project) in list(user_project_matrix)):
-            user_project_matrix[str(project)] = 0
-            update_project_info(int(project))
-        # old_value = data[data['user']==user][str(project)]
-        user_project_matrix.loc[user_project_matrix['user']==user, str(project)] = 1
 
-        # Update historical records
-        historical_row = historical_records.shape[0]
-        historical_records.loc[historical_row] = [user, project, mtype, when, origin, repetitions]
+def insert_to_files(user,project,when,origin,mtype,repetitions):
+    # Update user project matrix
+    if not (user in list(user_project_matrix['user'])):
+        new_row_number = user_project_matrix.shape[0]
+        user_project_matrix.loc[new_row_number] = [user] + list(np.zeros(user_project_matrix.shape[1]-1,dtype=int))
+    if not (str(project) in list(user_project_matrix)):
+        user_project_matrix[str(project)] = 0
+        update_project_info(int(project))
+    # old_value = data[data['user']==user][str(project)]
+    user_project_matrix.loc[user_project_matrix['user']==user, str(project)] = 1
+
+    # Update historical records
+    historical_row = historical_records.shape[0]
+    historical_records.loc[historical_row] = [user, project, mtype, when, origin, repetitions]
 
 def __put_update_time():
     if(os.path.isfile('update_times.txt')):
@@ -193,6 +231,16 @@ def update_project_info(project_id):
             Recommender.projects_info.to_csv('projects_info.csv')
     except Exception as e:
         print("exception! project: ", project_id, e)
+
+
+def update_id(new_id, filename):
+    with open(filename, "w") as fd:
+        fd.write(str(new_id) + "\n")
+
+
+def retrieve_id(file_name):
+    with open(file_name, "r") as fd:
+        return int(fd.readline().strip())
 
 if __name__ == '__main__':
     update_records()

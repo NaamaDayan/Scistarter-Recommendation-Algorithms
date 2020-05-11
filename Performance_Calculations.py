@@ -7,6 +7,7 @@ import Recommender
 from CFItemItem import CFItemItem
 from CFUserUser import CFUserUser
 from PopularityBased import PopularityBased
+from ContentBased import ContentBased
 from Recommender import is_online_project_recommended
 from SVD import SVD
 
@@ -64,10 +65,12 @@ def get_precision_and_recall_by_time_split(user, k, algorithm, ip_address):
         user_index = user_index_place[0] if len(user_index_place) > 0 else -1
 
         relevant_projects = algorithm.get_recommendations(user_index, known_user_likes_train, k, ip_address)
+        # precision = len([project for project in known_user_likes_test if project in relevant_projects]) / len(known_user_likes_test)
+        # print ("precision:", precision)
         relevant_projects = Recommender.make_sure_k_recommendations(relevant_projects, user_index, k, ip_address)
         print (user, relevant_projects, known_user_likes_test)
-        if not is_online_project_recommended(relevant_projects):
-            relevant_projects[-1] = algorithm.get_highest_online_project()
+        # if not is_online_project_recommended(relevant_projects):
+        #     relevant_projects[-1] = algorithm.get_highest_online_project()
         # print ("recommendations: ", relevant_projects)
         if len(relevant_projects)<k: #for debugging
             print ("problem with user: ", user_index)
@@ -82,11 +85,11 @@ def get_precision_and_recall_by_time_split(user, k, algorithm, ip_address):
 def precision_recall_at_k(k_values, test_users, algorithm):
     for k in k_values:
         results = []
-        ip_addresses = ['64.233.160.0', '74.125.224.72', '132.72.235.23', '13.68.172.47']
+        ip_addresses = ['']
         i=0
         for user in test_users:
             print (i)
-            results.append(get_precision_and_recall_by_time_split(user, k, algorithm, ip_addresses[i%4]))
+            results.append(get_precision_and_recall_by_time_split(user, k, algorithm, ip_addresses[i%len(ip_addresses)]))
             i+=1
         precisions = np.mean([i[0] for i in results if i[0]>=0])
         recalls = np.mean([i[1] for i in results if i[1]>=0])
@@ -97,8 +100,10 @@ def precision_recall_at_k(k_values, test_users, algorithm):
 if __name__ == '__main__':
     print(Recommender.data_items.shape)
     print(data_items_train.shape)
+
     # for ip change get_recommendation param
-    # precision_recall_at_k([3], Recommender.data['user'].values, CFUserUser(data_items_train))
+    precision_recall_at_k([3], Recommender.data['user'].values, ContentBased(data_items_train, PopularityBased(data_items_train)))
     # precision_recall_at_k([3], Recommender.data['user'].values, CFItemItem(data_items_train))
+    # precision_recall_at_k([3], Recommender.data['user'].values, CFUserUser(data_items_train))
     # precision_recall_at_k([3], Recommender.data['user'].values, PopularityBased(data_items_train))
     # precision_recall_at_k([3], Recommender.data['user'].values, SVD(data_items_train))

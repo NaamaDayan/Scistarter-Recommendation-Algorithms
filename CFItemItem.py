@@ -43,7 +43,7 @@ class CFItemItem(Strategy):
             if project in score.index:
                 score = score.drop(project)
         score = self.remove_non_active_projects(score)
-        score = self.remove_unreachable_projects(score, ip_address)
+        # score = self.remove_unreachable_projects(score, ip_address)
         self.score = score
         self.user = user_index
         recommended_projects = score.nlargest(k).index.tolist()
