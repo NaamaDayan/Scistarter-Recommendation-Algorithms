@@ -9,9 +9,7 @@ do
     echo $! >pid
     sleep $INTVL
 
-    DIRNAME="../Backup/`date`"
-    mkdir "$DIRNAME"
-    cp * "$DIRNAME"
+
 done
 
 

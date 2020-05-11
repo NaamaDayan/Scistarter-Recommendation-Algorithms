@@ -52,8 +52,9 @@ class CFItemItem(Strategy):
     @staticmethod
     def remove_non_active_projects(projects_score):
         from Recommender import non_active_projects
+        from Updater import projects_names
         for project in projects_score.index:
-            if project in non_active_projects['project'].values:
+            if project in non_active_projects['project'].values or project not in projects_names.index:
                 projects_score = projects_score.drop(project)
         return projects_score
 

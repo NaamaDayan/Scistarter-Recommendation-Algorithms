@@ -28,6 +28,7 @@ else:
     historical_records = pd.DataFrame(columns = ['profile', 'project', 'type', 'whens', 'origin', 'repetitions'])
     user_project_matrix = pd.DataFrame(columns=['user'])
 
+<<<<<<< HEAD
 # page = int(historical_records.shape[0]/500)
 # record = int(historical_records.shape[0]%500)
 
@@ -50,6 +51,54 @@ def update_records():
     if len(cleaned['activity']) != 0:
         _update_data(cleaned)
 
+=======
+page = int(historical_records.shape[0]/500)
+record = int(historical_records.shape[0]%500)
+
+def cut_unrelevant_clicks():
+    global clicks
+    clicks_index = retrieve_clicks_id("clicks_id.txt")
+    new_clicks_index = clicks.shape[0]-1
+    clicks = clicks[clicks.index>=clicks_index]
+    update_clicks_id(new_clicks_index, "clicks_id.txt")
+
+def update_interaction_records():
+    interaction_page = retrieve_clicks_id("interaction_page_id.txt")
+    while True:
+        interaction_page = int(interaction_page) + 1
+        print('load interaction page', interaction_page)
+
+        url = 'https://scistarter.org/api/interest-history?page='+str(interaction_page)
+        url_page = urllib.request.urlopen(url)
+        content = url_page.read().decode("utf8")
+        print (content)
+        content = eval(content.replace("\"", "\'")[10:-1])
+
+        interactions = json_from_interaction_page(content) #json{'actvity':[interaction, ...]}
+        if len(interactions['activity']) == 0:
+            break
+        else:
+            _update_data(interactions)
+    update_clicks_id(interaction_page, "interaction_page_id.txt")
+
+
+def update_records():
+    global page
+    global record
+    print('filter current page')
+    cleaned = __filter_current_page(page, record)
+    if len(cleaned['activity']) != 0:
+        _update_data(cleaned)
+
+    #clicks
+    cut_unrelevant_clicks()
+    extract_clicks()  # from click stream
+
+    # interactions - not affiliate projects
+    update_interaction_records()
+
+    #affiliate projects
+>>>>>>> master
     while True:
         page = int(page) + 1
         print('load page', page)
@@ -64,9 +113,15 @@ def update_records():
             break
         else:
             _update_data(content)
+<<<<<<< HEAD
             historical_records_pkl.put_data_pkl(historical_records)
             user_project_matrix_csv.put_data_csv(user_project_matrix)
             update_id(page, 'historical_records_id.txt')
+=======
+
+    historical_records_pkl.put_data_pkl(historical_records)
+    user_project_matrix_csv.put_data_csv(user_project_matrix)
+>>>>>>> master
     __put_update_time()
 
 
@@ -106,8 +161,11 @@ def __JSONconverter (cleaned_text):
         elif ('"project"') in a:
             index = [m.start() for m in re.finditer(':', a)]
             project = a[index[-1]+2:]
+<<<<<<< HEAD
             if project is None or project == 'null':
                 return {}
+=======
+>>>>>>> master
             data['project'] = int(project)
         elif ('"when"') in a:
             index = [m.start() for m in re.finditer('"', a)]
@@ -158,6 +216,7 @@ def extract_clicks():
 
 def _update_data(cleaned):
     for entry in cleaned['activity']:
+<<<<<<< HEAD
         if len(entry)>0 and entry['type']!='interaction':
             user = entry['user']
             project = entry['project']
@@ -167,6 +226,29 @@ def _update_data(cleaned):
             repetitions = entry['repetitions']
             insert_to_files(user,project,when,origin,mtype,repetitions)
 
+=======
+        user = entry['user']
+        project = entry['project']
+        when = entry['when']
+        origin = entry['origin']
+        mtype = entry['type']
+        repetitions = entry['repetitions']
+        insert_to_files(user,project,when,origin,mtype,repetitions)
+
+def json_from_interaction_page(page_content):
+    interactions = {'activity': []}
+    for entry in page_content:
+        for interest in entry['interests']:
+            json_entry = {}
+            json_entry['user'] = entry['user_id']
+            json_entry['project'] = interest['project_id']
+            json_entry['when'] = interest['when']
+            json_entry['type'] = 'interaction'
+            json_entry['repetitions'] = 1
+            json_entry['origin'] = ''
+            interactions['activity'].append(json_entry)
+    return interactions
+>>>>>>> master
 
 def insert_to_files(user,project,when,origin,mtype,repetitions):
     # Update user project matrix
@@ -230,6 +312,7 @@ def update_project_info(project_id):
             Recommender.projects_info.loc[project_id] = [is_active, regions]
             Recommender.projects_info.to_csv('projects_info.csv')
     except Exception as e:
+<<<<<<< HEAD
         print("exception! project: ", project_id, e)
 
 
@@ -239,6 +322,17 @@ def update_id(new_id, filename):
 
 
 def retrieve_id(file_name):
+=======
+        print("cannot update project info for project: ", project_id, e)
+
+
+def update_clicks_id(new_id, file_name):
+    with open(file_name, "w") as fd:
+        fd.write(str(new_id) + "\n")
+
+
+def retrieve_clicks_id(file_name):
+>>>>>>> master
     with open(file_name, "r") as fd:
         return int(fd.readline().strip())
 
